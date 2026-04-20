@@ -1,18 +1,43 @@
-// TODO: Build a class-based ErrorBoundary component.
-// React's error boundary API only exists on class components — there is no
-// hook version. This is the one place you still need `class extends Component`.
-//
-// Requirements:
-// 1. It must be a class component that extends React.Component.
-// 2. It takes `children: ReactNode` as a prop.
-// 3. It has internal state with a `hasError: boolean` flag.
-// 4. Implement the static method `getDerivedStateFromError` that returns the
-//    new state ({ hasError: true }) when a child throws during render.
-// 5. Implement `componentDidCatch(error, info)` and call `logger.error(...)`
-//    inside it so every render crash is reported through your logger.
-// 6. In render(), if hasError is true, show a fallback UI (e.g. a red banner
-//    saying "Something went wrong."). Otherwise return this.props.children.
-//
-// Hints:
-// - Import { Component, type ErrorInfo, type ReactNode } from 'react'
-// - Import { logger } from '@/shared/lib/logger'
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { logger } from '@/shared/lib/logger';
+
+type ErrorBoundaryProps = {
+  children: ReactNode;
+};
+
+type ErrorBoundaryState = {
+  hasError: boolean;
+};
+
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+  };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    logger.error('React ErrorBoundary caught a render error', {
+      error,
+      componentStack: info.componentStack,
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rounded border border-red-400 bg-red-100 p-4 text-red-800">
+          <h2 className="font-bold">Something went wrong.</h2>
+          <p className="mt-2">This page crashed during render.</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
